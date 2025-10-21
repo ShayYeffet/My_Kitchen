@@ -2,9 +2,8 @@
   "name": "ai-kitchen",
   "version": "1.0.0",
   "description": "AI-powered recipe and drink generator based on available ingredients with liquid converter for drinks",
-
   "scripts": {
-    "start": "node server.js",
+    "start": "npx serve -s . -p $PORT",
     "dev": "serve -s . -l 3000",
     "build": "echo 'Static site - no build needed'",
     "preview": "serve -s . -l 3000",
@@ -26,7 +25,7 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "devDependencies": {
+  "dependencies": {
     "serve": "^14.2.1"
   },
   "repository": {
