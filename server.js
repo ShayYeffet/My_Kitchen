@@ -19,8 +19,27 @@ const mimeTypes = {
 };
 
 const server = createServer((req, res) => {
+  // Add CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+  
   const parsedUrl = parse(req.url);
   let pathname = parsedUrl.pathname;
+  
+  // Health check endpoint
+  if (pathname === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'OK', timestamp: new Date().toISOString() }));
+    return;
+  }
   
   // Default to index.html for root path
   if (pathname === '/') {
@@ -43,12 +62,12 @@ const server = createServer((req, res) => {
       res.end(indexContent);
     }
   } catch (error) {
-    res.writeHead(500);
-    res.end('Server Error');
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Server Error: ' + error.message);
     console.error('Server error:', error);
   }
 });
 
-server.listen(port, () => {
-  console.log(`🍳 AI Kitchen server running on port ${port}`);
+server.listen(port, '0.0.0.0', () => {
+  console.log(`🍳 AI Kitchen server running on 0.0.0.0:${port}`);
 });
