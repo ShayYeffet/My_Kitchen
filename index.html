@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Kitchen - Recipe & Drink Generator</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">
+    <meta name="description"
+        content="Smart recipe and drink generator based on ingredients you have. Reduce food waste and discover new recipes!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --panel-hover: #334155;
+            --border: rgba(148, 163, 184, 0.1);
+            --border-hover: rgba(148, 163, 184, 0.2);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --accent: #06b6d4;
+            --accent-hover: #0891b2;
+            --accent-light: rgba(6, 182, 212, 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gradient: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .app-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .app-main {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .panel:hover {
+            border-color: var(--border-hover);
+        }
+
+        .panel h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: var(--bg);
+            padding: 0.25rem;
+            border-radius: 12px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .ingredients-input {
+            width: 100%;
+            min-height: 120px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.875rem;
+            resize: vertical;
+            transition: border-color 0.2s ease;
+        }
+
+        .ingredients-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .ingredients-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .quick-ingredients {
+            margin-top: 1rem;
+        }
+
+        .quick-ingredients h4 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .ingredient-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .ingredient-tag {
+            padding: 0.25rem 0.75rem;
+            background: var(--accent-light);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ingredient-tag:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .input-container {
+            position: relative;
+        }
+
+        .input-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background: var(--panel-hover);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: all 0.2s ease;
+            z-index: 100;
+        }
+
+        .theme-toggle:hover {
+            background: var(--panel-hover);
+            transform: scale(1.1);
+        }
+
+        .recipe-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            object-position: center bottom;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .recipe-image.developer-choice-drink {
+            object-position: center 85%;
+        }
+
+        .recipe-image.developer-choice-food {
+            object-position: center center;
+        }
+
+        .difficulty-badge {
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .difficulty-easy {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .difficulty-medium {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .difficulty-hard {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .recipe-timer {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .recipe-timer:hover {
+            background: var(--accent-hover);
+        }
+
+        .timer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .timer-content {
+            background: var(--panel);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .timer-display {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 1rem 0;
+        }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, var(--panel) 25%, var(--panel-hover) 50%, var(--panel) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .skeleton-image {
+            width: 100%;
+            height: 120px;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .skeleton-text {
+            height: 1rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-text.short {
+            width: 60%;
+        }
+
+        .skeleton-text.medium {
+            width: 80%;
+        }
+
+        [data-theme="light"] {
+            --bg: #ffffff;
+            --panel: #f8fafc;
+            --panel-hover: #f1f5f9;
+            --border: rgba(15, 23, 42, 0.1);
+            --border-hover: rgba(15, 23, 42, 0.2);
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --text-dim: #94a3b8;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .filter-select {
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--panel-hover);
+            color: var(--text);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .results-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .recipe-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .recipe-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .recipe-card.selected {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .recipe-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .recipe-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .recipe-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .match-score {
+            background: var(--success);
+            color: white;
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.625rem;
+            font-weight: 600;
+        }
+
+        .developer-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .recipe-card.developer-choice {
+            border-color: #fbbf24;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05));
+        }
+
+        .recipe-card.developer-choice:hover {
+            border-color: #f59e0b;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+        }
+
+        .developer-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .btn-developer {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            border: none;
+            width: 100%;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .btn-developer:hover {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);
+        }
+
+        .developer-note {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin: 0;
+        }
+
+        .recipe-details {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .recipe-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .recipe-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .recipe-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .recipe-actions .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+        }
+
+        .ingredients-list,
+        .instructions-list {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .ingredients-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .ingredients-list li:last-child {
+            border-bottom: none;
+        }
+
+        .ingredient-check {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--success);
+        }
+
+        .instructions-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+            counter-increment: step;
+        }
+
+        .instructions-list li:last-child {
+            border-bottom: none;
+        }
+
+        .instructions-list li::before {
+            content: counter(step);
+            background: var(--accent);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .instructions-list {
+            counter-reset: step;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--success);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .unit-converter {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .converter-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .converter-input {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.875rem;
+        }
+
+        .converter-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .converter-select {
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        .converter-swap {
+            background: var(--panel-hover);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .converter-swap:hover {
+            background: var(--accent);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .converter-result {
+            background: var(--accent-light);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: var(--accent);
+            font-weight: 600;
+            text-align: center;
+            font-size: 1rem;
+            min-height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+
+        .quick-conversions {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .quick-conversions h5 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .conversion-hints {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .liquid-converter-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .liquid-converter-section h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .app-main {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .filters {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .app-header {
+                padding: 1rem;
+            }
+
+            .panel {
+                padding: 1rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .recipe-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .theme-toggle {
+                top: 0.5rem;
+                right: 0.5rem;
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</div>
+
+    <header class="app-header">
+        <h1>🍳 My Kitchen</h1>
+    </header>
+
+    <main class="app-main">
+        <!-- Input Panel -->
+        <section class="panel">
+            <h2>🥘 What can you make?</h2>
+
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="food">Food</button>
+                <button class="mode-btn" data-mode="drinks">Drinks</button>
+            </div>
+
+            <div class="input-container">
+                <textarea class="ingredients-input" id="ingredientsInput"
+                    placeholder="Enter ingredients you have (e.g., chicken, rice, garlic, onions)..."></textarea>
+                <datalist id="ingredient-suggestions">
+                    <option value="chicken breast">
+                    <option value="ground beef">
+                    <option value="salmon fillet">
+                    <option value="olive oil">
+                    <option value="garlic cloves">
+                    <option value="yellow onion">
+                    <option value="roma tomatoes">
+                    <option value="basmati rice">
+                    <option value="pasta">
+                    <option value="potatoes">
+                    <option value="bell peppers">
+                    <option value="mushrooms">
+                    <option value="spinach">
+                    <option value="cheddar cheese">
+                    <option value="mozzarella">
+                    <option value="heavy cream">
+                    <option value="butter">
+                    <option value="eggs">
+                    <option value="flour">
+                    <option value="soy sauce">
+                    <option value="lemon juice">
+                    <option value="fresh herbs">
+                </datalist>
+                <div class="input-suggestions" id="inputSuggestions"></div>
+            </div>
+
+            <div class="quick-ingredients">
+                <h4>Quick Add</h4>
+                <div class="ingredient-tags" id="quickIngredients"></div>
+            </div>
+
+            <div class="filters" id="filtersContainer">
+                <!-- Filters will be dynamically populated based on mode -->
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" id="generateBtn">
+                    <span class="btn-text">Find Recipes</span>
+                </button>
+                <button class="btn btn-secondary" id="surpriseBtn">🎲 Surprise Me</button>
+            </div>
+
+            <!-- Liquid Unit Converter -->
+            <div class="liquid-converter-section">
+                <h4>💧 Liquid Converter</h4>
+                <div class="unit-converter">
+                    <div class="converter-row">
+                        <input type="number" class="converter-input" id="fromValue" placeholder="Enter amount"
+                            step="any">
+                        <select class="converter-select" id="fromUnit">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="converter-row">
+                        <button class="converter-swap" id="swapUnits" title="Swap units">⇅</button>
+                    </div>
+                    <div class="converter-row">
+                        <div class="converter-result" id="toValue">0</div>
+                        <select class="converter-select" id="toUnit">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="quick-conversions" id="quickConversions">
+                        <!-- Quick conversion hints will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="developer-section">
+                <button class="btn btn-developer" id="developerChoiceBtn">
+                    ⭐ Developer's Choice
+                </button>
+                <p class="developer-note" id="developerNote">My personal favorite</p>
+            </div>
+        </section>
+
+        <!-- Results Panel -->
+        <section class="panel">
+            <h2>📋 Suggestions</h2>
+            <div class="results-grid" id="resultsContainer">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🔍</div>
+                    <p>Enter some ingredients to get started!</p>
+                </div>
+            </div>
+        </section>
+
+
+
+        <!-- Details Panel -->
+        <section class="panel">
+            <h2 id="detailsTitle">📖 Recipe Details</h2>
+            <div class="recipe-details" id="recipeDetails">
+                <div class="empty-state">
+                    <div class="empty-state-icon">👨‍🍳</div>
+                    <p>Select a recipe to see the details</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="timer-modal" id="timerModal" style="display: none;">
+        <div class="timer-content">
+            <h3>Cooking Timer</h3>
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            <div class="timer-controls">
+                <button class="btn btn-secondary" id="pauseTimer">Pause</button>
+                <button class="btn btn-secondary" id="resetTimer">Reset</button>
+                <button class="btn btn-secondary" id="closeTimer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
